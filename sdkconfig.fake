@@ -1,0 +1,5 @@
+# Variante fake saber: si aggiunge a sdkconfig.defaults (vedi tools/build-all.sh).
+CONFIG_BRIDGE_FAKE_SABER=y
+
+# Niente host USB: la console torna sulla USB della XIAO, log senza adattatore USB-UART.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

@@ -10,7 +10,7 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 #include "bridge.h"
-#include "usb_saber.h"
+#include "saber.h"
 #include "ble_uart.h"
 #include "ble_status.h"
 
@@ -67,7 +67,7 @@ static int gatt_rx_cb(uint16_t conn, uint16_t attr, struct ble_gatt_access_ctxt 
     if (ble_hs_mbuf_to_flat(ctxt->om, tmp, sizeof tmp, &len) != 0) {
         return BLE_ATT_ERR_UNLIKELY;
     }
-    if (!usb_saber_connected()) {
+    if (!saber_connected()) {
         ESP_LOGD(TAG, "write di %u byte rifiutata: spada non collegata", len);
         return ATT_ERR_SABER_ABSENT;
     }
