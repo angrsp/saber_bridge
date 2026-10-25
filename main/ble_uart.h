@@ -1,5 +1,6 @@
 #pragma once
-#include "freertos/FreeRTOS.h"
-#include "freertos/stream_buffer.h"
+#include <stdbool.h>
+#include "pipe.h"
 
-void ble_uart_start(StreamBufferHandle_t to_saber, StreamBufferHandle_t to_ble);
+void ble_uart_start(pipe_t *to_saber, pipe_t *to_ble);
+bool ble_uart_connected(void);
