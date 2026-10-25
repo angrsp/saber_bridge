@@ -6,3 +6,5 @@ sdkconfig.old
 __pycache__/
 .vscode/
 build-*/
+f0-report-*.md
+f0-backup-*.json
