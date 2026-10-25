@@ -26,6 +26,7 @@ check '| `XYZ\\n` | \*(nessuna)\* | — | sì |' "silenzio sul comando inesisten
 check 'Emulatore | Osservato' "intestazione della tabella"
 check '| `P=0,0,255,0\\n` | `OK, P=0,0,255,0\\n` | [0-9]* ms | sì | sì |' "osservazione registrata"
 check 'senza `SAVE`, dopo lo spegnimento: (5, 6, 7, 8) (mantenuto)' "persistenza senza SAVE (l'emulatore tiene tutto in RAM)"
+check 'Porta sparita durante lo spegnimento: non verificabile' "porta non verificabile su una pty"
 check 'Ripristino dei colori originali: riuscito' "ripristino"
 if grep -q '\*\*no\*\*' "$REPORT"; then echo "FALLITO: l'emulatore non coincide con se stesso"; fail=1; fi
 # l'emulatore risponde in meno di 50 ms (il timeout di lettura): il tempo al primo byte deve essere sotto

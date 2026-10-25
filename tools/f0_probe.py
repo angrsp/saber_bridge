@@ -21,6 +21,7 @@ import datetime as dt
 import json
 import re
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -49,13 +50,12 @@ def eight_lines(kind):
 PROBE = [
     {"cmd": b"WR?\n", "expect": r"OK, Write Ready\n"},
     {"cmd": b"V?\n", "expect": r"V=[^\n]+\n"},
-    {"cmd": b"S?\n", "expect": r"S=[^\n]+\n"},
+    {"cmd": b"S?\n", "expect": r"S=[0-9a-f]+\n"},
     {"cmd": b"B?\n", "expect": r"B=[0-7]\n"},
     {"cmd": b"c?\n", "expect": eight_lines("c")},
     {"cmd": b"f?\n", "expect": eight_lines("f")},
-    {"cmd": b"w?\n", "expect": eight_lines("w"), "note": "richiede la build >= 1.9.15"},
-    {"cmd": b"C0=255,0,0,0\n", "expect": r"OK C0=255,0,0,0\n",
-     "note": "eco del comando o colore esadecimale?"},
+    {"cmd": b"w?\n", "expect": eight_lines("w"), "note": "sulla EVO richiede la build >= 1.9.15; la NXT 1.1.0 risponde"},
+    {"cmd": b"C0=255,0,0,0\n", "expect": r"OK C0=255,0,0,0\n", "note": "eco del comando"},
     {"cmd": b"c0?\n", "expect": r"c0=255,0,0,0\n"},
     {"cmd": b"P=0,0,255,0\n", "expect": r"OK, P=0,0,255,0\n",
      "observe": "La lama si è accesa di blu?"},
@@ -218,6 +218,18 @@ def run_probe(saber, rows):
         rows.append(row)
 
 
+def port_listed(device):
+    return any(p.device == device for p in list_ports.comports())
+
+
+def watch_port(device, stop, seen):
+    """Segna in seen se la porta sparisce dall'elenco, finché stop non viene impostato."""
+    while not stop.is_set():
+        if not port_listed(device):
+            seen["vanished"] = True
+        stop.wait(0.2)
+
+
 def run_persistence(saber, log):
     result = {}
     log("\nProva di persistenza: bank 0 con SAVE, bank 1 senza SAVE.")
@@ -231,8 +243,19 @@ def run_persistence(saber, log):
         return result
 
     saber.close()
-    input("\nSpegni la spada con il suo interruttore, aspetta qualche secondo, riaccendila "
-          "(cavo sempre collegato), poi premi Invio... ")
+    # se la porta non sparisce mai, la spada è rimasta alimentata e la RAM non si è persa
+    # (una pty non compare nell'elenco delle porte: lì non si può verificare)
+    listed = port_listed(saber.device)
+    seen, stop = {}, threading.Event()
+    if listed:
+        threading.Thread(target=watch_port, args=(saber.device, stop, seen), daemon=True).start()
+    input("\nSpegni la spada con il suo interruttore, aspetta che la porta sparisca (qualche secondo), "
+          "riaccendila (cavo sempre collegato), poi premi Invio... ")
+    stop.set()
+    result["port_vanished"] = seen.get("vanished", False) if listed else None
+    if listed and not result["port_vanished"]:
+        log(f"Attenzione: {saber.device} non è mai sparita, la spada è rimasta alimentata: "
+            "il risultato senza SAVE non è significativo.")
     print("Riapro la porta...")
     saber.reopen()
     after = saber.read_main_colors()
@@ -270,6 +293,10 @@ def write_report(path, info, args, rows, persistence, restored, notes):
     elif "after" not in persistence:
         out.append(f"Prova annullata: colori di prova non impostati ({persistence.get('before')}).")
     else:
+        vanished = persistence["port_vanished"]
+        out.append("- Porta sparita durante lo spegnimento: " +
+                   {True: "sì", False: "**no** (spada rimasta alimentata: il bank 1 non dice niente)",
+                    None: "non verificabile"}[vanished])
         out.append(f"- Bank 0 impostato a {SAVE_COLOR} + `SAVE`, dopo lo spegnimento: "
                    f"{persistence['after'].get(0)} ({'mantenuto' if persistence['with_save'] else '**perso**'})")
         out.append(f"- Bank 1 impostato a {NOSAVE_COLOR} senza `SAVE`, dopo lo spegnimento: "
