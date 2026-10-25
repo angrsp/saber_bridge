@@ -1,11 +1,6 @@
-#include "esp_log.h"
+#include "esp_err.h"
 #include "nvs_flash.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/stream_buffer.h"
-#include "usb_saber.h"
-#include "ble_uart.h"
-
-#define BUF_SIZE 2048
+#include "bridge.h"
 
 void app_main(void)
 {
@@ -16,13 +11,5 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(err);
 
-    /* Un solo scrittore e un solo lettore per stream buffer (requisito di FreeRTOS):
-     * to_saber: scrive la callback GATT, legge il task USB.
-     * to_ble:   scrive la callback dati CDC, legge il task di notifica BLE. */
-    StreamBufferHandle_t to_saber = xStreamBufferCreate(BUF_SIZE, 1);
-    StreamBufferHandle_t to_ble   = xStreamBufferCreate(BUF_SIZE, 1);
-    configASSERT(to_saber && to_ble);
-
-    usb_saber_start(to_saber, to_ble);
-    ble_uart_start(to_saber, to_ble);
+    bridge_start();
 }

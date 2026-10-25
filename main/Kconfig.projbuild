@@ -1,0 +1,67 @@
+menu "Saber Bridge"
+
+    config BRIDGE_BLE_NAME
+        string "Nome BLE (scan response, al massimo 29 caratteri)"
+        default "SaberBridge"
+
+    config BRIDGE_SABER_ANY_DEVICE
+        bool "Accetta qualsiasi dispositivo CDC"
+        default n
+        help
+            Se disattivato, il bridge apre solo le spade note:
+            0483:5740 (Anima NXT) e 16C0:0483 (Anima EVO).
+
+    config BRIDGE_CDC_INTERFACE
+        int "Indice dell'interfaccia CDC della spada"
+        range 0 15
+        default 0
+
+    config BRIDGE_ASSERT_DTR
+        bool "Asserisci DTR all'apertura"
+        default y
+
+    config BRIDGE_ASSERT_RTS
+        bool "Asserisci RTS all'apertura"
+        default y
+        help
+            pyserial apre la porta con DTR e RTS asseriti: il bridge fa lo stesso.
+            Le due opzioni servono per provarli separatamente.
+
+    config BRIDGE_LED_GPIO
+        int "GPIO del LED di stato (-1 = nessun LED)"
+        range -1 48
+        default 21
+
+    config BRIDGE_LED_ACTIVE_LOW
+        bool "LED attivo basso"
+        depends on BRIDGE_LED_GPIO >= 0
+        default y
+
+    choice BRIDGE_LOG_LEVEL_CHOICE
+        prompt "Livello di log del bridge"
+        default BRIDGE_LOG_LEVEL_INFO
+        help
+            Vale per i moduli del bridge, non per ESP-IDF.
+            Debug e Verbose sono visibili anche se il livello massimo di ESP-IDF è più basso.
+
+        config BRIDGE_LOG_LEVEL_ERROR
+            bool "Error"
+        config BRIDGE_LOG_LEVEL_WARN
+            bool "Warning"
+        config BRIDGE_LOG_LEVEL_INFO
+            bool "Info"
+        config BRIDGE_LOG_LEVEL_DEBUG
+            bool "Debug"
+        config BRIDGE_LOG_LEVEL_VERBOSE
+            bool "Verbose"
+    endchoice
+
+    config BRIDGE_LOG_LEVEL
+        int
+        default 1 if BRIDGE_LOG_LEVEL_ERROR
+        default 2 if BRIDGE_LOG_LEVEL_WARN
+        default 3 if BRIDGE_LOG_LEVEL_INFO
+        default 4 if BRIDGE_LOG_LEVEL_DEBUG
+        default 5 if BRIDGE_LOG_LEVEL_VERBOSE
+
+endmenu
