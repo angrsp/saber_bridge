@@ -38,7 +38,7 @@ int main(void)
     CHECK_STR(cmd("WR?"), "OK, Write Ready\n");
     CHECK_STR(cmd("wr?"), "OK, Write Ready\n");                 /* equalsIgnoreCase */
     CHECK_STR(cmd("V?"), "V=NXT_fake\n");
-    CHECK_STR(cmd("S?"), "S=0000fa4e-00000000-00000001\n");
+    CHECK_STR(cmd("S?"), "S=fa4e0046414b4510000001\n");
     CHECK_STR(cmd("s?"), "");                                   /* S? distingue le maiuscole */
     CHECK_STR(cmd("B?"), "B=0\n");
 

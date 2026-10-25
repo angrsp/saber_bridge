@@ -46,3 +46,17 @@ python -m esptool --chip esp32s3 -p COMx -b 460800 write_flash "@flash_args"
 ```
 
 Per la variante fake, lo stesso da `build-fake/`.
+
+## F0: risposte reali della spada
+
+Con la spada accesa e collegata al PC col cavo col rosso tagliato:
+
+```
+pip install pyserial
+python tools/f0_probe.py
+```
+
+Lo script manda i comandi della fase F0, confronta le risposte con l'emulatore, prova la persistenza
+dei colori con uno spegnimento (si salta con `--skip-persistence`) e scrive un report `f0-report-*.md`.
+Prima di modificare qualcosa salva i colori principali in `f0-backup-*.json` e alla fine li rimette;
+se si interrompe a metà: `python tools/f0_probe.py --restore f0-backup-<data>.json`.

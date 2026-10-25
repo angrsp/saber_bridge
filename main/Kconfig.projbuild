@@ -25,6 +25,9 @@ menu "Saber Bridge"
         depends on !BRIDGE_FAKE_SABER
         range 0 15
         default 0
+        help
+            Interfaccia di comunicazione CDC (classe 02). Sulla NXT è la 0, con i dati sulla 1
+            (verificato in F0 con USBTreeView).
 
     config BRIDGE_ASSERT_DTR
         bool "Asserisci DTR all'apertura"
