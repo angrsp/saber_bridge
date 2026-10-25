@@ -6,7 +6,11 @@
 #include "usb/usb_host.h"
 #include "usb/cdc_acm_host.h"
 #include "bridge.h"
-#include "usb_saber.h"
+#include "saber.h"
+
+#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG || CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG
+#error "La console su USB-Serial-JTAG confligge con l'host USB: usare UART0 (sdkconfig.defaults)"
+#endif
 
 static const char *TAG = "usb_saber";
 
@@ -42,9 +46,9 @@ static volatile bool s_gone;
 static volatile uint32_t s_open_id;  /* USB_ID della spada aperta */      /* evento di disconnessione arrivato per il dispositivo aperto */
 static _Atomic uint32_t s_seen;   /* USB_ID dell'ultimo dispositivo comparso, 0 = nessuno */
 
-bool usb_saber_connected(void) { return s_connected; }
+bool saber_connected(void) { return s_connected; }
 
-bool usb_saber_ids(uint16_t *vid, uint16_t *pid)
+bool saber_ids(uint16_t *vid, uint16_t *pid)
 {
     uint32_t id = s_connected ? s_open_id : 0;
     *vid = ID_VID(id);
@@ -190,7 +194,7 @@ static void saber_task(void *arg)
     }
 }
 
-void usb_saber_start(pipe_t *to_saber, pipe_t *to_ble)
+void saber_start(pipe_t *to_saber, pipe_t *to_ble)
 {
     esp_log_level_set(TAG, CONFIG_BRIDGE_LOG_LEVEL);
     s_tx_in = to_saber;

@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "pipe.h"
-#include "usb_saber.h"
+#include "saber.h"
 #include "ble_uart.h"
 #include "ble_status.h"
 #include "bridge.h"
@@ -68,7 +68,7 @@ static void led_task(void *arg)
         bool on;
         if (!ble_uart_connected()) {
             on = (tick / (500 / LED_TICK_MS)) % 2 == 0;
-        } else if (!usb_saber_connected()) {
+        } else if (!saber_connected()) {
             on = (tick / (100 / LED_TICK_MS)) % 2 == 0;
         } else {
             on = true;
@@ -103,7 +103,7 @@ void bridge_start(void)
     pipe_init(&s_to_saber, BUF_SIZE);
     pipe_init(&s_to_ble, BUF_SIZE);
 
-    usb_saber_start(&s_to_saber, &s_to_ble);
+    saber_start(&s_to_saber, &s_to_ble);
     ble_uart_start(&s_to_saber, &s_to_ble);
     led_start();
     ESP_LOGI(TAG, "bridge avviato");

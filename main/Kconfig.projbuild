@@ -1,11 +1,20 @@
 menu "Saber Bridge"
 
+    config BRIDGE_FAKE_SABER
+        bool "Variante fake saber (emulatore della NXT, niente host USB)"
+        default n
+        help
+            Al posto della spada vera c'è un piccolo emulatore della NXT dietro gli stessi buffer.
+            La console resta sulla USB della XIAO (USB-Serial-JTAG): si compila con
+            sdkconfig.fake in aggiunta a sdkconfig.defaults (vedi tools/build-all.sh).
+
     config BRIDGE_BLE_NAME
         string "Nome BLE (scan response, al massimo 29 caratteri)"
         default "SaberBridge"
 
     config BRIDGE_SABER_ANY_DEVICE
         bool "Accetta qualsiasi dispositivo CDC"
+        depends on !BRIDGE_FAKE_SABER
         default n
         help
             Se disattivato, il bridge apre solo le spade note:
@@ -13,15 +22,18 @@ menu "Saber Bridge"
 
     config BRIDGE_CDC_INTERFACE
         int "Indice dell'interfaccia CDC della spada"
+        depends on !BRIDGE_FAKE_SABER
         range 0 15
         default 0
 
     config BRIDGE_ASSERT_DTR
         bool "Asserisci DTR all'apertura"
+        depends on !BRIDGE_FAKE_SABER
         default y
 
     config BRIDGE_ASSERT_RTS
         bool "Asserisci RTS all'apertura"
+        depends on !BRIDGE_FAKE_SABER
         default y
         help
             pyserial apre la porta con DTR e RTS asseriti: il bridge fa lo stesso.

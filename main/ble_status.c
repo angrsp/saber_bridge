@@ -7,7 +7,7 @@
 #include "services/dis/ble_svc_dis.h"
 #include "battery.h"
 #include "bridge.h"
-#include "usb_saber.h"
+#include "saber.h"
 #include "ble_status.h"
 
 static const char *TAG = "ble_status";
@@ -43,7 +43,7 @@ static const ble_uuid128_t uuid_status = BLE_UUID128_INIT(
 static uint32_t build_status(uint8_t out[STATUS_LEN])
 {
     uint16_t vid = 0, pid = 0;
-    bool saber = usb_saber_ids(&vid, &pid);
+    bool saber = saber_ids(&vid, &pid);
     uint32_t lost = bridge_peek_lost();
 
     out[0] = STATUS_FORMAT;
