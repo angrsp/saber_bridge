@@ -12,6 +12,7 @@
 #include "bridge.h"
 #include "usb_saber.h"
 #include "ble_uart.h"
+#include "ble_status.h"
 
 /* Definita in NimBLE (store/config) senza header pubblico, come nell'esempio bleprph. */
 void ble_store_config_init(void);
@@ -114,6 +115,8 @@ static void request_conn_params(uint16_t conn)
 
 static int gap_event(struct ble_gap_event *ev, void *arg)
 {
+    ble_status_on_gap_event(ev);   /* prima del flush: la notifica di stato usa la connessione nuova */
+
     switch (ev->type) {
     case BLE_GAP_EVENT_CONNECT:
         if (ev->connect.status == 0) {
@@ -266,10 +269,12 @@ void ble_uart_start(pipe_t *to_saber, pipe_t *to_ble)
         ESP_LOGE(TAG, "servizi GATT non registrati: %d", rc);
         abort();
     }
+    ble_status_register();
     ble_svc_gap_device_name_set(CONFIG_BRIDGE_BLE_NAME);
     ble_att_set_preferred_mtu(247);
     ble_store_config_init();
 
+    ble_status_start();
     xTaskCreate(notify_task, "ble_notify", 4096, NULL, 5, NULL);
     nimble_port_freertos_init(host_task);
 }

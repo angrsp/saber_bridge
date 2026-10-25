@@ -38,10 +38,19 @@ static pipe_t *s_tx_in;     /* BLE -> spada */
 static pipe_t *s_rx_out;    /* spada -> BLE */
 static TaskHandle_t s_task;
 static volatile bool s_connected;
-static volatile bool s_gone;      /* evento di disconnessione arrivato per il dispositivo aperto */
+static volatile bool s_gone;
+static volatile uint32_t s_open_id;  /* USB_ID della spada aperta */      /* evento di disconnessione arrivato per il dispositivo aperto */
 static _Atomic uint32_t s_seen;   /* USB_ID dell'ultimo dispositivo comparso, 0 = nessuno */
 
 bool usb_saber_connected(void) { return s_connected; }
+
+bool usb_saber_ids(uint16_t *vid, uint16_t *pid)
+{
+    uint32_t id = s_connected ? s_open_id : 0;
+    *vid = ID_VID(id);
+    *pid = ID_PID(id);
+    return id != 0;
+}
 
 static bool id_allowed(uint32_t id)
 {
@@ -117,6 +126,7 @@ static void run_session(cdc_acm_dev_hdl_t dev, uint32_t id)
     (void)cdc_acm_host_set_control_line_state(dev, ASSERT_DTR, ASSERT_RTS);
     ESP_LOGI(TAG, "spada collegata: %04x:%04x (DTR %d, RTS %d)", ID_VID(id), ID_PID(id),
              ASSERT_DTR, ASSERT_RTS);
+    s_open_id = id;
     s_connected = true;
     bridge_state_changed();
 
@@ -129,6 +139,7 @@ static void run_session(cdc_acm_dev_hdl_t dev, uint32_t id)
     }
     cdc_acm_host_close(dev);   /* va chiamata anche dopo l'evento di disconnessione */
     s_connected = false;
+    s_open_id = 0;
     bridge_state_changed();
 }
 

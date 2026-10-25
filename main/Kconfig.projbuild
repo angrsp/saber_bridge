@@ -37,6 +37,34 @@ menu "Saber Bridge"
         depends on BRIDGE_LED_GPIO >= 0
         default y
 
+    config BRIDGE_BATTERY
+        bool "Lettura della batteria"
+        default n
+        help
+            Richiede un partitore dalla batteria a un GPIO di ADC1 (per esempio due resistenze
+            da 220 kOhm) con un condensatore da 100 nF verso massa sul punto centrale: il
+            partitore ad alta impedenza da solo non basta al campionamento dell'ADC.
+
+    config BRIDGE_BATTERY_GPIO
+        int "GPIO del partitore (ADC1: GPIO1-GPIO10)"
+        depends on BRIDGE_BATTERY
+        range 1 10
+        default 1
+
+    config BRIDGE_BATTERY_DIVIDER_X1000
+        int "Rapporto del partitore Vbat/Vpin, x1000"
+        depends on BRIDGE_BATTERY
+        range 1000 10000
+        default 2000
+        help
+            2000 per due resistenze uguali.
+
+    config BRIDGE_BATTERY_LOW_MV
+        int "Soglia di batteria bassa (mV)"
+        depends on BRIDGE_BATTERY
+        range 3000 4200
+        default 3400
+
     choice BRIDGE_LOG_LEVEL_CHOICE
         prompt "Livello di log del bridge"
         default BRIDGE_LOG_LEVEL_INFO

@@ -6,6 +6,7 @@
 #include "pipe.h"
 #include "usb_saber.h"
 #include "ble_uart.h"
+#include "ble_status.h"
 #include "bridge.h"
 
 static const char *TAG = "bridge";
@@ -22,16 +23,24 @@ void bridge_state_changed(void)
 {
     pipe_flush(&s_to_saber);
     pipe_flush(&s_to_ble);
+    ble_status_changed();
 }
 
 void bridge_count_lost(uint32_t n)
 {
-    atomic_fetch_add(&s_lost, n);
+    if (atomic_fetch_add(&s_lost, n) == 0) {
+        ble_status_changed();   /* il flag "byte persi" passa a 1 */
+    }
 }
 
-uint32_t bridge_take_lost(void)
+uint32_t bridge_peek_lost(void)
 {
-    return atomic_exchange(&s_lost, 0);
+    return atomic_load(&s_lost);
+}
+
+void bridge_ack_lost(uint32_t n)
+{
+    atomic_fetch_sub(&s_lost, n);
 }
 
 #if CONFIG_BRIDGE_LED_GPIO >= 0
