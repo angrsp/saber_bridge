@@ -14,7 +14,7 @@ Questo piano contiene il **contratto BLE condiviso** con l'app (sezione 3): è l
 | F2 – Robustezza | ✅ conclusa | 2026-10-25 | `d82cbc0` | |
 | F3 – Stato e DIS | ✅ conclusa | 2026-10-25 | `975004c` | UUID fissati (3.3) |
 | F4 – Fake saber | ✅ conclusa | 2026-10-25 | `659b842` | emulatore allineato alle risposte reali di F0 |
-| F5 – Bring-up hardware | ⏳ in attesa | | | serve la XIAO |
+| F5 – Bring-up hardware | 🔧 in corso | | | `tools/bridge_test.py` pronto (provato solo con `--serial` contro l'emulatore); per chiudere serve la XIAO |
 | F6 – Bridge con la NXT | ⏳ in attesa | | | servono XIAO, LiPo, OTG |
 | F7–F10 | ⏳ in attesa | | | |
 

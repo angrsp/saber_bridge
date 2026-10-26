@@ -60,3 +60,20 @@ Lo script manda i comandi della fase F0, confronta le risposte con l'emulatore, 
 dei colori con uno spegnimento (si salta con `--skip-persistence`) e scrive un report `f0-report-*.md`.
 Prima di modificare qualcosa salva i colori principali in `f0-backup-*.json` e alla fine li rimette;
 se si interrompe a metà: `python tools/f0_probe.py --restore f0-backup-<data>.json`.
+
+## F5: prova del bridge via BLE
+
+Con il bridge acceso (variante fake o reale con la spada collegata) e il Bluetooth del PC attivo:
+
+```
+pip install bleak
+python tools/bridge_test.py
+```
+
+Lo script trova il bridge (UUID del NUS), legge DIS e stato, manda i comandi di sola lettura, chiede una
+risposta lunga che deve arrivare su più notifiche, poi 500 comandi di fila (`--count` per cambiarli) e
+misura la latenza come la vede l'app. Alla fine controlla che lo stato non riporti byte persi e scrive un
+report `bridge-test-*.md`. Non modifica i colori della spada.
+
+Con `--serial COM5` fa le stesse prove sulla spada collegata direttamente al PC, senza bridge: serve a
+confrontare le latenze (e, con l'emulatore su una pty, alle prove sul PC di `tools/test-host.sh`).
