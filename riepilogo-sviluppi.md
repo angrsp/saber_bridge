@@ -76,15 +76,14 @@ Da sapere per l'app:
 - Remoto: `github.com/angrsp/saber_bridge`.
 - `main` contiene solo il commit iniziale: nessuna versione è ancora rilasciata.
 - `develop` contiene F0–F5, il piano e questo riepilogo.
-- Rami già uniti in `develop`, da cancellare: `feature/bridge-test-tool`, `feature/f0-protocol-notes`, `feature/plan-in-repo` (i primi due anche su `origin`).
+- Nessun ramo `feature/` aperto: quelli già uniti sono stati cancellati, in locale e su `origin`.
 
 ## Prossimi passi
 
 ### Subito, senza hardware
 1. **Ordinare l'hardware che manca:** LiPo con circuito di protezione (PCM), adattatore OTG corto e di buona qualità, adattatore USB-UART a 3,3 V.
-2. **Pulire i rami:** cancellare quelli già uniti in `develop`, in locale e su `origin`.
-3. **App:** la fase A3 non è più bloccata da F0 e può partire usando il §6 del piano. Anche la prima parte di A6 (app via BLE con la variante fake) si può fare già ora con la XIAO. In `piano-app-BLE.md` va aggiornato il rimando al piano, che ora si trova in `saber_bridge/piano-FW-bridge.md`.
-4. **Sul telefono:** la correzione per Windows riguarda il NimBLE dell'ESP32, non il PC: va verificato che anche Android si connetta al primo colpo (nRF Connect o l'app).
+2. **App:** la fase A3 non è più bloccata da F0 e può partire usando il §6 del piano. Anche la prima parte di A6 (app via BLE con la variante fake) si può fare già ora con la XIAO. In `piano-app-BLE.md` va aggiornato il rimando al piano, che ora si trova in `saber_bridge/piano-FW-bridge.md`.
+3. **Sul telefono:** la correzione per Windows riguarda il NimBLE dell'ESP32, non il PC: va verificato che anche Android si connetta al primo colpo (nRF Connect o l'app).
 
 ### Con OTG e LiPo: F6 e F7
 1. **F6:** prima di collegare la LiPo, controllare la polarità dei pad batteria sul silkscreen. Poi variante reale con la NXT (cavo col rosso tagliato), con le stesse risposte del §6; colore + `SAVE` e verifica dopo lo spegnimento; prove con DTR/RTS asseriti, solo DTR, nessuno. I log dall'adattatore USB-UART su D6/D7.
