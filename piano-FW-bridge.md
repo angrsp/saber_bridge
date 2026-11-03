@@ -191,7 +191,8 @@ Richiede: XIAO.
 - 500 comandi di sola lettura, 0 errori, flag "byte persi" a zero. Latenza (scrittura con risposta → ultima riga): minima 57 ms, mediana 60 ms, media 68 ms, 95% 92 ms, massima 151 ms. Windows sceglie l'intervallo di connessione di 30 ms (il massimo chiesto): una richiesta costa circa due intervalli.
 - Risposta lunga (`c?`, `f?`, `w?` in una scrittura, 376 byte): ricomposta da 3 notifiche.
 - MTU 247; DIS (`SaberBridge-S3`, `0.0.0`) e stato letti; con la spada scollegata (`unplug`) la scrittura è rifiutata con `0x80`.
-- Non fatte: polarità dei pad batteria (nessuna batteria, si rimanda a F6); prova con nRF Connect (coperta da `bridge_test.py`).
+- nRF Connect su Android (2026-11-03, dopo la correzione qui sotto): si connette al primo tentativo.
+- Non fatta: polarità dei pad batteria (nessuna batteria, si rimanda a F6).
 
 Problemi trovati e corretti:
 - **Connessione bloccata con Windows.** Il NimBLE di ESP-IDF 5.5 ritarda l'evento `CONNECT` fino alla lettura delle funzioni del client. Il Bluetooth Intel risponde con l'errore 0x1A, il collegamento resta attivo, ma `CONNECT` arriva con stato 26; con `BT_NIMBLE_DEFER_CONN_EVENTS_UNTIL_CONNECT` NimBLE scarta anche le richieste ATT arrivate prima. Risultato: scoperta dei servizi appesa per 30 s (timeout ATT), connessione aperta all'insaputa del firmware, advertising impossibile (`ENOMEM`). Correzioni: coda disattivata in `sdkconfig.defaults`; un `CONNECT` con stato diverso da zero conta come connessione se il collegamento esiste.

@@ -51,7 +51,7 @@ La variante fake è provata sulla XIAO (F5) e il protocollo sulla NXT collegata 
 
 ### F5 – Bring-up della XIAO
 - `tools/bridge_test.py` (bleak): DIS e stato, comandi di sola lettura, una risposta lunga che arriva su più notifiche, 500 comandi di fila con la latenza, controllo dei byte persi, report. Con `--serial` fa le stesse prove senza BLE (sulla spada collegata al PC, o sull'emulatore nelle prove sul PC).
-- Variante fake sulla XIAO, con la sua antenna, provata dal PC Windows: 500 comandi senza errori né byte persi, latenza mediana 60 ms, media 68 ms, massima 151 ms. Risposta lunga di 376 byte ricomposta da 3 notifiche. MTU 247, DIS e stato corretti, `0x80` con la spada scollegata.
+- Variante fake sulla XIAO, con la sua antenna, provata dal PC Windows: 500 comandi senza errori né byte persi, latenza mediana 60 ms, media 68 ms, massima 151 ms. Risposta lunga di 376 byte ricomposta da 3 notifiche. MTU 247, DIS e stato corretti, `0x80` con la spada scollegata. Da Android (nRF Connect) si connette al primo tentativo.
 - **Corretto un blocco della connessione con Windows.** Il Bluetooth Intel risponde con un errore alla lettura delle funzioni del client, e il NimBLE di ESP-IDF scambiava la connessione per fallita: scartava le prime richieste dei servizi (scoperta appesa per 30 s) e lasciava la connessione aperta senza advertising. Correzioni in `sdkconfig.defaults` e in `ble_uart.c`; l'advertising ora riparte da solo se non parte.
 - Log di NimBLE a livello warning: a livello info scriveva una riga per ogni notifica, troppo lento sulla UART della variante reale.
 
@@ -83,7 +83,6 @@ Da sapere per l'app:
 ### Subito, senza hardware
 1. **Ordinare l'hardware che manca:** LiPo con circuito di protezione (PCM), adattatore OTG corto e di buona qualità, adattatore USB-UART a 3,3 V.
 2. **App:** la fase A3 non è più bloccata da F0 e può partire usando il §6 del piano. Anche la prima parte di A6 (app via BLE con la variante fake) si può fare già ora con la XIAO. In `piano-app-BLE.md` va aggiornato il rimando al piano, che ora si trova in `saber_bridge/piano-FW-bridge.md`.
-3. **Sul telefono:** la correzione per Windows riguarda il NimBLE dell'ESP32, non il PC: va verificato che anche Android si connetta al primo colpo (nRF Connect o l'app).
 
 ### Con OTG e LiPo: F6 e F7
 1. **F6:** prima di collegare la LiPo, controllare la polarità dei pad batteria sul silkscreen. Poi variante reale con la NXT (cavo col rosso tagliato), con le stesse risposte del §6; colore + `SAVE` e verifica dopo lo spegnimento; prove con DTR/RTS asseriti, solo DTR, nessuno. I log dall'adattatore USB-UART su D6/D7.
