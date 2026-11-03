@@ -8,3 +8,5 @@ __pycache__/
 build-*/
 f0-report-*.md
 f0-backup-*.json
+bridge-test-*.md
+.venv/

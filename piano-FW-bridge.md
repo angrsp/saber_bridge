@@ -14,11 +14,11 @@ Questo piano contiene il **contratto BLE condiviso** con l'app (sezione 3): è l
 | F2 – Robustezza | ✅ conclusa | 2026-10-25 | `d82cbc0` | |
 | F3 – Stato e DIS | ✅ conclusa | 2026-10-25 | `975004c` | UUID fissati (3.3) |
 | F4 – Fake saber | ✅ conclusa | 2026-10-25 | `659b842` | emulatore allineato alle risposte reali di F0 |
-| F5 – Bring-up hardware | ⏳ in attesa | | | serve la XIAO |
+| F5 – Bring-up hardware | ✅ conclusa | 2026-11-03 | sì | 500 comandi senza perdite, latenza media 68 ms; corretto un blocco della connessione con Windows (vedi F5) |
 | F6 – Bridge con la NXT | ⏳ in attesa | | | servono XIAO, LiPo, OTG |
 | F7–F10 | ⏳ in attesa | | | |
 
-Nessuna fase è ancora provata su hardware reale: F1–F4 sono verificate con la build (0 warning) e con le prove sul PC (`tools/test-host.sh`).
+F1–F4 sono verificate con la build (0 warning) e con le prove sul PC (`tools/test-host.sh`); dalla F5 la variante fake è provata sulla XIAO. La variante reale non è ancora provata con la NXT (F6).
 
 ## 1. Punto di partenza
 
@@ -186,6 +186,17 @@ Richiede: XIAO.
 - Flash della variante fake; prova con nRF Connect: notifiche su TX, scrittura su RX di `57 52 3F 0A` (`WR?\n`) → `OK, Write Ready`; lettura dello stato e del DIS.
 - Script `tools/bridge_test.py` (Python + `bleak`): scansione, richiesta/risposta, latenza media e massima, 500 comandi di fila, risposte su più notifiche.
 - Uscita: 500 comandi senza perdite; latenza misurata e annotata.
+
+**Risultati (2026-11-03).** XIAO ESP32-S3 (8 MB di flash, 8 MB di PSRAM) con la sua antenna FPC, alimentata dalla USB del PC; variante fake; client: PC Windows 10 con Bluetooth Intel e `bridge_test.py` (bleak 3.0.2).
+- 500 comandi di sola lettura, 0 errori, flag "byte persi" a zero. Latenza (scrittura con risposta → ultima riga): minima 57 ms, mediana 60 ms, media 68 ms, 95% 92 ms, massima 151 ms. Windows sceglie l'intervallo di connessione di 30 ms (il massimo chiesto): una richiesta costa circa due intervalli.
+- Risposta lunga (`c?`, `f?`, `w?` in una scrittura, 376 byte): ricomposta da 3 notifiche.
+- MTU 247; DIS (`SaberBridge-S3`, `0.0.0`) e stato letti; con la spada scollegata (`unplug`) la scrittura è rifiutata con `0x80`.
+- Non fatte: polarità dei pad batteria (nessuna batteria, si rimanda a F6); prova con nRF Connect (coperta da `bridge_test.py`).
+
+Problemi trovati e corretti:
+- **Connessione bloccata con Windows.** Il NimBLE di ESP-IDF 5.5 ritarda l'evento `CONNECT` fino alla lettura delle funzioni del client. Il Bluetooth Intel risponde con l'errore 0x1A, il collegamento resta attivo, ma `CONNECT` arriva con stato 26; con `BT_NIMBLE_DEFER_CONN_EVENTS_UNTIL_CONNECT` NimBLE scarta anche le richieste ATT arrivate prima. Risultato: scoperta dei servizi appesa per 30 s (timeout ATT), connessione aperta all'insaputa del firmware, advertising impossibile (`ENOMEM`). Correzioni: coda disattivata in `sdkconfig.defaults`; un `CONNECT` con stato diverso da zero conta come connessione se il collegamento esiste.
+- **Advertising non ripartito.** Se l'avvio fallisce, ora si riprova ogni secondo.
+- **Log di NimBLE a livello warning.** A livello info scrive una riga per notifica: sulla UART a 115200 della variante reale costerebbe circa 7 ms ognuna.
 
 ### F6 – Bridge reale con la NXT (`feature/nxt-bringup`)
 Richiede: XIAO, LiPo, adattatore OTG, cavo col rosso tagliato; meglio con l'adattatore USB-UART.

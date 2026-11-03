@@ -33,6 +33,8 @@ _Static_assert(sizeof(CONFIG_BRIDGE_BLE_NAME) - 1 <= 29, "CONFIG_BRIDGE_BLE_NAME
 #define CONN_ITVL_MAX    24
 #define CONN_SUPERVISION 400
 
+#define ADV_RETRY_MS 1000   /* advertising non partito (es. connessione non ancora liberata): si riprova */
+
 static pipe_t *s_to_saber;
 static pipe_t *s_to_ble;
 
@@ -40,6 +42,7 @@ static uint8_t s_own_addr_type;
 static uint16_t s_tx_handle;
 static volatile uint16_t s_conn = BLE_HS_CONN_HANDLE_NONE;
 static volatile bool s_notify_en;
+static struct ble_npl_callout s_adv_retry;   /* gira nel task host di NimBLE, come gli eventi GAP */
 
 bool ble_uart_connected(void) { return s_conn != BLE_HS_CONN_HANDLE_NONE; }
 
@@ -115,7 +118,16 @@ static void request_conn_params(uint16_t conn)
 
 static int gap_event(struct ble_gap_event *ev, void *arg)
 {
+    /* Il NimBLE di ESP-IDF ritarda CONNECT fino alla lettura delle funzioni del client e ne riporta
+     * l'eventuale errore come stato anche se il collegamento resta attivo (0x1A con il Bluetooth Intel
+     * di Windows). Conta il collegamento: altrimenti resta aperto senza che l'app lo sappia. */
+    if (ev->type == BLE_GAP_EVENT_CONNECT && ev->connect.status != 0 &&
+        ble_gap_conn_find(ev->connect.conn_handle, NULL) == 0) {
+        ESP_LOGW(TAG, "connessione attiva nonostante lo stato %d", ev->connect.status);
+        ev->connect.status = 0;
+    }
     ble_status_on_gap_event(ev);   /* prima del flush: la notifica di stato usa la connessione nuova */
+    ESP_LOGD(TAG, "evento GAP %d", ev->type);
 
     switch (ev->type) {
     case BLE_GAP_EVENT_CONNECT:
@@ -125,6 +137,7 @@ static int gap_event(struct ble_gap_event *ev, void *arg)
             bridge_state_changed();
             request_conn_params(ev->connect.conn_handle);
         } else {
+            ESP_LOGW(TAG, "connessione non riuscita: %d", ev->connect.status);
             advertise();
         }
         break;
@@ -142,10 +155,14 @@ static int gap_event(struct ble_gap_event *ev, void *arg)
                 ESP_LOGI(TAG, "intervallo di connessione %u.%02u ms",
                          desc.conn_itvl * 125 / 100, desc.conn_itvl * 125 % 100);
             }
+        } else {
+            ESP_LOGW(TAG, "parametri di connessione non aggiornati: %d", ev->conn_update.status);
         }
         break;
     case BLE_GAP_EVENT_SUBSCRIBE:
+        ESP_LOGI(TAG, "iscrizione handle %u: notify %d", ev->subscribe.attr_handle, ev->subscribe.cur_notify);
         if (ev->subscribe.attr_handle == s_tx_handle) {
+            s_conn = ev->subscribe.conn_handle;   /* l'iscrizione può arrivare prima di CONNECT */
             s_notify_en = ev->subscribe.cur_notify;
         }
         break;
@@ -153,12 +170,20 @@ static int gap_event(struct ble_gap_event *ev, void *arg)
         ESP_LOGI(TAG, "MTU = %d", ev->mtu.value);
         break;
     case BLE_GAP_EVENT_ADV_COMPLETE:
+        ESP_LOGI(TAG, "advertising finito: %d", ev->adv_complete.reason);
         advertise();
         break;
     default:
         break;
     }
     return 0;
+}
+
+static void adv_retry_cb(struct ble_npl_event *ev)
+{
+    if (s_conn == BLE_HS_CONN_HANDLE_NONE && !ble_gap_adv_active()) {
+        advertise();
+    }
 }
 
 static void advertise(void)
@@ -182,7 +207,8 @@ static void advertise(void)
     params.disc_mode = BLE_GAP_DISC_MODE_GEN;
     int rc = ble_gap_adv_start(s_own_addr_type, NULL, BLE_HS_FOREVER, &params, gap_event, NULL);
     if (rc != 0) {
-        ESP_LOGE(TAG, "advertising non avviato: %d", rc);
+        ESP_LOGW(TAG, "advertising non avviato: %d, riprovo tra %d ms", rc, ADV_RETRY_MS);
+        ble_npl_callout_reset(&s_adv_retry, ble_npl_time_ms_to_ticks32(ADV_RETRY_MS));
     }
 }
 
@@ -255,6 +281,7 @@ void ble_uart_start(pipe_t *to_saber, pipe_t *to_ble)
     s_to_ble = to_ble;
 
     ESP_ERROR_CHECK(nimble_port_init());
+    ble_npl_callout_init(&s_adv_retry, nimble_port_get_dflt_eventq(), adv_retry_cb, NULL);
     ble_hs_cfg.sync_cb = on_sync;
     ble_hs_cfg.reset_cb = on_reset;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;

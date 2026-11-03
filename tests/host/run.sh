@@ -9,4 +9,5 @@ gcc $CFLAGS tests/host/test_pipe.c main/pipe.c -o build-host/test_pipe
 export ASAN_OPTIONS=detect_leaks=0
 build-host/test_nxt_emu
 build-host/test_pipe
-tests/host/f0_probe_emu.sh
+sh tests/host/f0_probe_emu.sh
+sh tests/host/bridge_test_emu.sh
