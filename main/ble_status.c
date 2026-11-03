@@ -111,6 +111,7 @@ void ble_status_on_gap_event(const struct ble_gap_event *ev)
         break;
     case BLE_GAP_EVENT_SUBSCRIBE:
         if (ev->subscribe.attr_handle == s_handle) {
+            s_conn = ev->subscribe.conn_handle;   /* l'iscrizione può arrivare prima di CONNECT */
             s_notify_en = ev->subscribe.cur_notify;
             if (s_notify_en) {
                 ble_status_changed();   /* stato iniziale appena il client si iscrive */

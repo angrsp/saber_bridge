@@ -11,6 +11,11 @@ CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1
 CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU=247
 CONFIG_BT_NIMBLE_ROLE_CENTRAL=n
 CONFIG_BT_NIMBLE_ROLE_OBSERVER=n
+# Con la coda attiva, se la lettura delle funzioni del client fallisce (0x1A con il Bluetooth Intel di
+# Windows) NimBLE scarta le richieste ATT arrivate prima di CONNECT: la scoperta dei servizi resta appesa.
+CONFIG_BT_NIMBLE_DEFER_CONN_EVENTS_UNTIL_CONNECT=n
+# A livello info NimBLE scrive una riga per ogni notifica: con la console su UART a 115200 rallenta il bridge
+CONFIG_BT_NIMBLE_LOG_LEVEL_WARNING=y
 # Device Information Service: Firmware Revision (PROJECT_VER) e Model Number (sempre presente)
 CONFIG_BT_NIMBLE_DIS_SERVICE=y
 CONFIG_BT_NIMBLE_SVC_DIS_FIRMWARE_REVISION=y

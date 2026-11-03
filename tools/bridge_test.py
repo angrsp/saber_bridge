@@ -150,7 +150,9 @@ class BleLink:
             device = await BleakScanner.find_device_by_filter(match, timeout=SCAN_TIMEOUT)
         if device is None:
             sys.exit("Nessun bridge trovato: è acceso e in advertising (LED a lampeggio lento)?")
-        print(f"Bridge: {device.name} {device.address}. Connessione...")
+        # trovato dal primo pacchetto di advertising: il nome sta nella scan response e può mancare
+        name = device.name or "nome non ricevuto"
+        print(f"Bridge: {name} {device.address}. Connessione...")
 
         def gone(_):
             self.disconnected = True
@@ -163,7 +165,7 @@ class BleLink:
         self.max_write = rx.max_write_without_response_size
         self.max_notify = self.client.mtu_size - 3
         self.info = {
-            "Bridge": f"{device.name} ({device.address})",
+            "Bridge": f"{name} ({device.address})",
             "Connessione": f"{(time.perf_counter() - t0) * 1000:.0f} ms",
             "MTU": f"{self.client.mtu_size} (scrittura massima {self.max_write} byte)",
             "Model Number": await self.read_text(DIS_MODEL),
